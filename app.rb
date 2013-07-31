@@ -1,33 +1,33 @@
 require 'sinatra'
-require 'omniauth'
-require 'omniauth-twitter'
+require 'logger'
 
 require './user'
 
 class App < Sinatra::Base
-  enable :sessions
+  enable :logging
 
   before do
+    logger.level = Logger::DEBUG
     content_type 'application/json'
   end
 
   post '/register' do
-    puts "**** register user with #{params[:email]}"
+    logger.debug "**** register user with #{params[:email]}"
     user = User.first_or_create({:email => params[:email]},
                                 {:email => params[:email],
                                   :password => params[:password],
                                   :created_at => Time.now,
                                   :updated_at => Time.now})
-    session[:user_id] = user.id
+    user.make_token(request.ip)
     status 200
     body(user.to_json)
   end
 
   post '/signin' do
-    puts "**** signin user with #{params[:email]}"
+    logger.debug "**** signin user with #{params[:email]}"
     user = User.first(:email => params[:email])
     if user.password == params[:password]
-      session[:user_id] = user.id
+      user.make_token(request.ip)
       status 200
       body(user.to_json)
     else
@@ -35,27 +35,23 @@ class App < Sinatra::Base
     end
   end
 
-  get '/auth/:provider/callback' do
-    
+  post '/new' do
+    logger.debug "**** authenticate token #{params[:token]}"
+    user = User.first(:token => params[:token])
+#    if user.nil?
+#      status 400
+#    else
+      post = Post.create(:user_id => user.id, :text => params[:text])
+      status 200
+      body(post.to_json)
+#    end
   end
   
-  get '/auth/failure' do
-    redirect '/'
-  end
-
-  get '/signout' do
-    session[:user_id] = nil
-    status 200
-  end
-
   private
+  
+  def authenticate
 
-  def auth_hash
-    request.env['omniauth.auth']
-  end
 
-  def current_user
-    @current_user ||= User.get(session[:user_id]) if session[:user_id]
   end
 
 end
