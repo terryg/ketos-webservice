@@ -6,7 +6,7 @@ require './user'
 class App < Sinatra::Base
 
   post '/register' do
-    logger.debug "**** register user with #{params[:email]}"
+    puts "**** register user with #{params[:email]}"
     user = User.first_or_create({:email => params[:email]},
                                 {:email => params[:email],
                                   :password => params[:password],
@@ -18,7 +18,7 @@ class App < Sinatra::Base
   end
 
   post '/signin' do
-    logger.debug "**** signin user with #{params[:email]}"
+    puts "**** signin user with #{params[:email]}"
     user = User.first(:email => params[:email])
     if user.password == params[:password]
       user.make_token(request.ip)
@@ -30,9 +30,9 @@ class App < Sinatra::Base
   end
 
   post '/provider' do
-    logger.debug "**** authenticate token #{params[:token]}"
+    puts "**** authenticate token #{params[:token]}"
     user = User.first(:token => params[:token])
-    logger.debug "**** create for #{params[:provider]}"
+    puts "**** create for #{params[:provider]}"
     provider = Provider.first_or_create({ :user_id => user.id,
                                           :uid => params[:uid]},
                                         { :user_id => user.id,
@@ -46,22 +46,17 @@ class App < Sinatra::Base
   end
 
   post '/new' do
-    logger.debug "**** authenticate token #{params[:token]}"
+    puts "**** authenticate token #{params[:token]}"
     user = User.first(:token => params[:token])
-#    if user.nil?
-#      status 400
-#    else
+    if user.nil?
+      status 400
+    else
       post = Post.create(:user_id => user.id, :text => params[:text])
       status 200
       body(post.to_json)
-#    end
+    end
   end
   
   private
   
-  def authenticate
-
-
-  end
-
 end
