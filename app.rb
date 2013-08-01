@@ -4,11 +4,22 @@ require 'logger'
 require './user'
 
 class App < Sinatra::Base
-  enable :logging
+  set :raise_errors => true
+  set :logging, true
 
-  before do
-    logger.level = Logger::DEBUG
-    content_type 'application/json'
+  log = File.new("log/sinatra.log", "a+")
+  STDOUT.reopen(log)
+  STDERR.reopen(log)
+
+  require 'logger'
+  configure do
+    LOGGER = Logger.new("log/sinatra.log") 
+  end
+
+  helpers do
+    def logger
+      LOGGER
+    end
   end
 
   post '/register' do
@@ -33,6 +44,22 @@ class App < Sinatra::Base
     else
       status 400
     end
+  end
+
+  post '/provider' do
+    logger.debug "**** authenticate token #{params[:token]}"
+    user = User.first(:token => params[:token])
+    logger.debug "**** create for #{params[:provider]}"
+    provider = Provider.first_or_create({ :user_id => user.id,
+                                          :uid => params[:uid]},
+                                        { :user_id => user.id,
+                                          :uid => params[:uid],
+                                          :name => params[:provider],
+                                          :access_token => params[:token],
+                                          :access_token_secret => params[:secret]
+                                        })
+    status 200
+    body(provider.to_json)
   end
 
   post '/new' do
