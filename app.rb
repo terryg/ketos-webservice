@@ -4,23 +4,6 @@ require 'logger'
 require './user'
 
 class App < Sinatra::Base
-  set :raise_errors => true
-  set :logging, true
-
-  log = File.new("log/sinatra.log", "a+")
-  STDOUT.reopen(log)
-  STDERR.reopen(log)
-
-  require 'logger'
-  configure do
-    LOGGER = Logger.new("log/sinatra.log") 
-  end
-
-  helpers do
-    def logger
-      LOGGER
-    end
-  end
 
   post '/register' do
     logger.debug "**** register user with #{params[:email]}"
