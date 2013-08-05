@@ -1,6 +1,6 @@
 require 'json'
 
-class Post
+class Item
   include DataMapper::Resource
 
   belongs_to :user
