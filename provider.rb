@@ -4,10 +4,11 @@ class Provider
   include DataMapper::Resource
 
   belongs_to :user
+
   property :id, Serial
   property :uid, String
   property :name, String
-  property :access_token, String
+  property :access_token, String, :length => 256
   property :access_token_secret, String
   property :created_at, DateTime
   property :updated_at, DateTime

@@ -35,7 +35,11 @@ class App < Sinatra::Base
       status 400
       puts "**** user is nil"
     else
-      puts "**** create for #{params[:provider]}"
+      puts "**** create for #{user.id}"
+      puts "**** provider #{params[:provider]}"
+      puts "**** uid #{params[:uid]}"
+      puts "**** access_token #{params[:access_token]}"
+      puts "**** access_token_secret #{params[:access_token_secret]}"
       provider = Provider.first_or_create({ :user_id => user.id,
                                             :uid => params[:uid]
                                           },
@@ -46,6 +50,9 @@ class App < Sinatra::Base
                                             :access_token_secret => params[:access_token_secret]
                                           })
       puts "**** created provider id [#{provider.id}]"
+      provider.errors.each do |e|
+        puts "**** #{e}"
+      end
       status 200
       body(provider.to_json)
     end
