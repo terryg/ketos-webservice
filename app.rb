@@ -64,7 +64,7 @@ class App < Sinatra::Base
     if user.nil?
       status 400
     else
-      puts "@[production.item] #{{'uid'=>user.id, 'created_at'=>params[:created_at], 'text'=>params[:text]}.to_json}"
+      puts "@[production.item] #{{'uid'=>user.id, 'source'=>params[:source], 'created_at'=>params[:created_at], 'text'=>params[:text]}.to_json}"
       status 200
     end
   end
