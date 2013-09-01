@@ -16,9 +16,11 @@ class App < Sinatra::Base
   end
 
   post '/signin' do
-    puts "**** signin user with #{params[:email]}"
-    user = User.first(:email => params[:email])
-    if user and user.password == params[:password]
+    request.body.rewind
+    req = JSON.parse(request.body.read)
+    puts "**** signin user with #{req['email']}"
+    user = User.first(:email => req['email'])
+    if user and user.password == req['password']
       user.make_token(request.ip)
       status 200
       body(user.to_json)
