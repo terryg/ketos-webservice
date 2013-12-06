@@ -25,7 +25,7 @@ class App < Sinatra::Base
       status 200
       body(user.to_json)
     else
-      status 400
+      status 401
     end
   end
 
