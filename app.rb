@@ -1,7 +1,9 @@
 require 'sinatra'
 require 'logger'
+require 'json'
 
 class App < Sinatra::Base
+  enable :methodoverride
 
   post '/register' do
     puts "**** register user with #{params[:email]}"
@@ -29,9 +31,20 @@ class App < Sinatra::Base
     end
   end
 
-  post '/provider' do
+  post '/forgot_password' do
+    request.body.rewind
+    req = JSON.parse(request.body.read)
+    puts "**** lost password for user with #{req['email']}"
+    user = User.first(:email => req['email'])
+    if user
+    else
+      status 401
+    end
+  end
+
+  post '/provider/create/:provider' do
     puts "**** authenticate token #{params[:token]}"
-    user = User.first(:token => "#{params[:token]}")
+    user = User.first(:token => params[:token])
 
     if user.nil?
       status 400
@@ -57,6 +70,43 @@ class App < Sinatra::Base
       end
       status 200
       body(provider.to_json)
+    end
+  end
+
+  delete '/provider/delete/:provider' do
+    puts "*** #{request.env}"
+    puts "*** request[\"Authorization\"] #{headers["Authorization"]}"
+
+    headers = request.env['HTTP_HEADERS']
+    puts "*** headers #{headers}"
+    sliced = headers.slice(1, headers.length-2)
+    puts "*** sliced #{sliced}"
+    h = {}
+    sliced.split(',').each do |substr|
+      ary = substr.strip.split('=>')
+      h[ary.first.tr('"','')] = ary.last.tr('"','')
+    end
+
+    auth = h['Authorization']
+    puts "*** auth #{auth}"
+    token = auth.gsub('Token ', '')
+    puts "**** authenticate token #{token}"
+    user = User.first(:token => token)
+
+    if user.nil?
+      status 400
+      puts "**** user is nil"
+    else
+      provider = Provider.first({ :user_id => user.id, :name => params[:provider]})
+      if provider.nil? then
+        status 404
+      else
+        if provider.destroy then
+          status 200
+        else
+          status 500
+        end
+      end
     end
   end
 
