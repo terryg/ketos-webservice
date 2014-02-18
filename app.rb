@@ -73,14 +73,45 @@ class App < Sinatra::Base
     end
   end
 
-  delete '/provider/delete/:provider' do
-    puts "*** #{request.env}"
-    puts "*** request[\"Authorization\"] #{headers["Authorization"]}"
-
+  put '/provider/update/:provider' do
+    puts "**** request.env #{request.env}"
     headers = request.env['HTTP_HEADERS']
-    puts "*** headers #{headers}"
+    if !headers.nil?
+      sliced = headers.slice(1, headers.length-2)
+      h = {}
+      sliced.split(',').each do |substr|
+        ary = substr.strip.split('=>')
+        h[ary.first.tr('"','')] = ary.last.tr('"','')
+      end
+
+      auth = h['Authorization']
+      token = auth.gsub('Token ', '')
+      puts "**** authenticate token #{token}"
+      user = User.first(:token => token)
+    end
+
+    if user.nil?
+      status 400
+      puts "**** user is nil"
+    else
+      provider = Provider.first({ :user_id => user.id, :name => params[:provider]})
+      if provider.nil? then
+        status 404
+      else
+        provider.uid = params[:uid]
+        if provider.save then 
+          status 200
+          body(provider.to_json)
+        else
+          status 500
+        end
+      end
+    end
+  end
+
+  delete '/provider/delete/:provider' do
+    headers = request.env['HTTP_HEADERS']
     sliced = headers.slice(1, headers.length-2)
-    puts "*** sliced #{sliced}"
     h = {}
     sliced.split(',').each do |substr|
       ary = substr.strip.split('=>')
@@ -88,7 +119,6 @@ class App < Sinatra::Base
     end
 
     auth = h['Authorization']
-    puts "*** auth #{auth}"
     token = auth.gsub('Token ', '')
     puts "**** authenticate token #{token}"
     user = User.first(:token => token)
